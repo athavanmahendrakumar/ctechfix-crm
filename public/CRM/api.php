@@ -52,10 +52,10 @@ if ($report === 'summary') {
 
     // Today revenue
     $todaySales = DB::queryOne(
-        "SELECT COALESCE(SUM(subtotal),0) AS rev, COUNT(*) AS cnt
+        "SELECT COALESCE(SUM(total_amount),0) AS rev, COUNT(*) AS cnt
          FROM sales WHERE DATE(created_at)=? AND sale_type='sale' $locSql", [$today]);
     $todayRepairs = DB::queryOne(
-        "SELECT COALESCE(SUM(s.subtotal),0) AS rev
+        "SELECT COALESCE(SUM(s.total_amount),0) AS rev
          FROM sales s JOIN repairs r ON r.id=s.repair_id
          WHERE DATE(s.created_at)=? AND s.sale_type IN ('repair_final','repair_deposit')
            AND r.is_training=0 $locSqlS", [$today]);
@@ -65,11 +65,11 @@ if ($report === 'summary') {
 
     // Month revenue -- sales table has no alias here so use plain $locSql
     $monthSales = DB::queryOne(
-        "SELECT COALESCE(SUM(subtotal),0) AS rev FROM sales
+        "SELECT COALESCE(SUM(total_amount),0) AS rev FROM sales
          WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $locSql",
         [$monthStart,$monthEnd]);
     $monthRepairs = DB::queryOne(
-        "SELECT COALESCE(SUM(s.subtotal),0) AS rev
+        "SELECT COALESCE(SUM(s.total_amount),0) AS rev
          FROM sales s JOIN repairs r ON r.id=s.repair_id
          WHERE s.sale_type IN ('repair_final','repair_deposit') AND r.is_training=0
            AND DATE(s.created_at) BETWEEN ? AND ? $locSqlS",
@@ -155,12 +155,12 @@ elseif ($report === 'sales') {
     // Daily breakdown
     $daily = DB::query(
         "SELECT DATE(s.created_at) AS day,
-                SUM(CASE WHEN s.sale_type='sale' THEN s.subtotal ELSE 0 END) AS walkin,
-                SUM(CASE WHEN s.sale_type IN ('repair_final','repair_deposit') THEN s.subtotal ELSE 0 END) AS repairs,
+                SUM(CASE WHEN s.sale_type='sale' THEN s.total_amount ELSE 0 END) AS walkin,
+                SUM(CASE WHEN s.sale_type IN ('repair_final','repair_deposit') THEN s.total_amount ELSE 0 END) AS repairs,
                 COUNT(DISTINCT CASE WHEN s.sale_type='sale' THEN s.id END) AS walkin_cnt,
-                SUM(CASE WHEN s.payment_method='cash' THEN s.subtotal ELSE 0 END) AS cash,
-                SUM(CASE WHEN s.payment_method='card' THEN s.subtotal ELSE 0 END) AS card,
-                SUM(CASE WHEN s.payment_method='e-transfer' THEN s.subtotal ELSE 0 END) AS etransfer
+                SUM(CASE WHEN s.payment_method='cash' THEN s.total_amount ELSE 0 END) AS cash,
+                SUM(CASE WHEN s.payment_method='card' THEN s.total_amount ELSE 0 END) AS card,
+                SUM(CASE WHEN s.payment_method='e-transfer' THEN s.total_amount ELSE 0 END) AS etransfer
          FROM sales s
          LEFT JOIN repairs r ON r.id=s.repair_id
          WHERE DATE(s.created_at) BETWEEN ? AND ?
@@ -190,13 +190,13 @@ elseif ($report === 'sales') {
     // By staff
     $byStaff = DB::query(
         "SELECT u.first_name, u.last_name,
-                COALESCE(SUM(CASE WHEN s.sale_type='sale' THEN s.subtotal END),0) AS walkin,
-                COALESCE(SUM(CASE WHEN s.sale_type IN ('repair_final','repair_deposit') THEN s.subtotal END),0) AS repairs
+                COALESCE(SUM(CASE WHEN s.sale_type='sale' THEN s.total_amount END),0) AS walkin,
+                COALESCE(SUM(CASE WHEN s.sale_type IN ('repair_final','repair_deposit') THEN s.total_amount END),0) AS repairs
          FROM sales s JOIN users u ON u.id=s.created_by
          LEFT JOIN repairs r ON r.id=s.repair_id
          WHERE DATE(s.created_at) BETWEEN ? AND ?
            AND (r.id IS NULL OR r.is_training=0) $locSqlS
-         GROUP BY s.created_by ORDER BY SUM(s.subtotal) DESC", [$from,$to]);
+         GROUP BY s.created_by ORDER BY SUM(s.total_amount) DESC", [$from,$to]);
 
     $out['period'] = ['from'=>$from,'to'=>$to,'type'=>$period];
     $out['daily_breakdown'] = $daily;
@@ -305,9 +305,9 @@ elseif ($report === 'cash') {
 
     $weekCash = DB::query(
         "SELECT DATE(created_at) AS day,
-                SUM(CASE WHEN payment_method='cash' THEN subtotal ELSE 0 END) AS cash,
-                SUM(CASE WHEN payment_method='card' THEN subtotal ELSE 0 END) AS card,
-                SUM(CASE WHEN payment_method='e-transfer' THEN subtotal ELSE 0 END) AS etransfer
+                SUM(CASE WHEN payment_method='cash' THEN total_amount ELSE 0 END) AS cash,
+                SUM(CASE WHEN payment_method='card' THEN total_amount ELSE 0 END) AS card,
+                SUM(CASE WHEN payment_method='e-transfer' THEN total_amount ELSE 0 END) AS etransfer
          FROM sales WHERE DATE(created_at) BETWEEN ? AND ? $locSql
          GROUP BY DATE(created_at) ORDER BY day", [$weekStart,$today]);
 
@@ -587,7 +587,7 @@ elseif ($report === 'bi') {
 
         // Revenue
         $walkin = DB::queryOne(
-            "SELECT COALESCE(SUM(subtotal),0) AS rev, COUNT(DISTINCT id) AS txns
+            "SELECT COALESCE(SUM(total_amount),0) AS rev, COUNT(DISTINCT id) AS txns
              FROM sales WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $lSql",
             [$from,$to]);
 
@@ -610,7 +610,7 @@ elseif ($report === 'bi') {
 
         // Payment breakdown
         $payments = DB::query(
-            "SELECT payment_method, COALESCE(SUM(subtotal),0) AS total
+            "SELECT payment_method, COALESCE(SUM(total_amount),0) AS total
              FROM sales WHERE DATE(created_at) BETWEEN ? AND ? $lSql
              GROUP BY payment_method", [$from,$to]);
         $payMap = [];
@@ -619,13 +619,13 @@ elseif ($report === 'bi') {
         // Staff revenue
         $staff = DB::query(
             "SELECT u.first_name, u.last_name,
-                    COALESCE(SUM(CASE WHEN s.sale_type='sale' THEN s.subtotal END),0) AS walkin,
-                    COALESCE(SUM(CASE WHEN s.sale_type IN ('repair_final','repair_deposit') THEN s.subtotal END),0) AS repairs
+                    COALESCE(SUM(CASE WHEN s.sale_type='sale' THEN s.total_amount END),0) AS walkin,
+                    COALESCE(SUM(CASE WHEN s.sale_type IN ('repair_final','repair_deposit') THEN s.total_amount END),0) AS repairs
              FROM sales s JOIN users u ON u.id=s.created_by
              LEFT JOIN repairs r ON r.id=s.repair_id
              WHERE DATE(s.created_at) BETWEEN ? AND ?
                AND (r.id IS NULL OR r.is_training=0) $lSqlS
-             GROUP BY s.created_by ORDER BY SUM(s.subtotal) DESC",
+             GROUP BY s.created_by ORDER BY SUM(s.total_amount) DESC",
             [$from,$to]);
 
         // Calls + conversion
