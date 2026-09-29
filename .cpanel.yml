@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/ctrecfkn/public_html/CRM
+    - export COREPATH=/home/ctrecfkn/core
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R public/CRM/. $DEPLOYPATH/
+    - /bin/cp -R core/. $COREPATH/

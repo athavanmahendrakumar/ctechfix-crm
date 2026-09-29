@@ -1,0 +1,13 @@
+# Never deploy the live config — contains DB credentials
+config/config.php
+
+# Word docs and build scripts (not needed on server)
+*.docx
+*.js
+deploy.py
+deploy.cfg
+debug.php
+
+# OS junk
+.DS_Store
+Thumbs.db
