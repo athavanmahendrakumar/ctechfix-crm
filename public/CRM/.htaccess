@@ -1,0 +1,15 @@
+# C Tech Fix CRM — Security & Routing
+Options -Indexes
+
+# Block access to sensitive file types
+<FilesMatch "\.(sql|log|md|env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
