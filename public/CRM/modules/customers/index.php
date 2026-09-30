@@ -29,7 +29,11 @@ if ($filterLocation) {
     $where[]  = 'c.location_id = ?';
     $params[] = $filterLocation;
 }
-// Staff see their location only
+// Managers and staff see their location only
+if (Auth::isManager()) {
+    $where[]  = 'c.location_id = ?';
+    $params[] = Auth::workingLocationId();
+}
 if (Auth::isStaff()) {
     $where[]  = 'c.location_id = ?';
     $params[] = $user['location_id'];
@@ -66,7 +70,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
            placeholder="Search name, phone, email..."
            value="<?= htmlspecialchars($search) ?>">
 
-    <?php if (Auth::isOwner() || Auth::isManager()): ?>
+    <?php if (Auth::isOwner()): ?>
     <select name="location_id" class="form-control filter-select" onchange="this.form.submit()">
         <option value="">All Locations</option>
         <?php foreach ($locations as $loc): ?>

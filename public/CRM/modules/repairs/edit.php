@@ -34,7 +34,7 @@ if ($isStaff && $repair['location_id'] != $user['location_id']) {
 }
 
 // Locations — staff locked to their own
-$locations = ($isOwner || $isManager)
+$locations = ($isOwner)
     ? DB::query('SELECT * FROM locations WHERE is_active=1 ORDER BY name', [])
     : DB::query('SELECT * FROM locations WHERE is_active=1 AND id=? ORDER BY name', [$user['location_id']]);
 
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $estimatedReady  = trim($_POST['estimated_ready_at'] ?? '');
     $assignedTo      = intval($_POST['assigned_to']     ?? 0) ?: null;
     $warrantyDays    = intval($_POST['warranty_days']   ?? 0);
-    $locationId      = ($isOwner || $isManager) ? intval($_POST['location_id'] ?? $repair['location_id']) : $repair['location_id'];
+    $locationId      = $isOwner ? intval($_POST['location_id'] ?? $repair['location_id']) : $repair['location_id'];
 
     if (!$firstName)   $errors[] = 'Customer first name is required.';
     if (!$phonePrimary) $errors[] = 'Phone number is required.';
@@ -334,7 +334,7 @@ label.svc-active .svc-chip,
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <?php if ($isOwner || $isManager): ?>
+                <?php if ($isOwner): ?>
                 <div class="form-group">
                     <label class="form-label">Location</label>
                     <select name="location_id" class="form-control">

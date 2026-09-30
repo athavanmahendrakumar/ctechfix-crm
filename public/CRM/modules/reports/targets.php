@@ -1,12 +1,4 @@
 <?php
-register_shutdown_function(function() {
-    $e = error_get_last();
-    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        $log = dirname(__DIR__, 4) . '/debug_report_error.txt';
-        file_put_contents($log, date('Y-m-d H:i:s') . "\nFILE: " . $e['file'] . "\nLINE: " . $e['line'] . "\nMSG: " . $e['message'] . "\n\n", FILE_APPEND);
-        echo '<pre style="background:#fee;padding:20px;margin:20px;border:2px solid red;font-size:14px;"><strong>PHP Fatal Error</strong><br>File: ' . $e['file'] . '<br>Line: ' . $e['line'] . '<br>Error: ' . htmlspecialchars($e['message']) . '</pre>';
-    }
-});
 // ============================================================
 // Sales Targets — Set & View per Location
 // ============================================================
@@ -41,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notes       = trim($_POST['notes'] ?? '');
 
     // Managers can only set targets for their own location
-    if (!$isOwner && !$isManager && $locationId !== $user['location_id']) {
+    if (!$isOwner && $locationId !== $user['location_id']) {
         $error = 'You can only set targets for your own location.';
     } else {
         DB::execute(
@@ -138,7 +130,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
 
 <!-- Current Performance vs Targets -->
 <?php foreach ($locations as $loc):
-    if (!$isOwner && !$isManager && $loc['id'] !== $user['location_id']) continue;
+    if (!$isOwner && $loc['id'] !== $user['location_id']) continue;
 ?>
 <div class="card" style="margin-bottom:1.5rem;">
     <div class="card-header">
@@ -200,7 +192,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
                     <label class="form-label">Location</label>
                     <select name="location_id" class="form-control" required>
                         <?php foreach ($locations as $loc):
-                            if (!$isOwner && !$isManager && $loc['id'] !== $user['location_id']) continue;
+                            if (!$isOwner && $loc['id'] !== $user['location_id']) continue;
                         ?>
                         <option value="<?= $loc['id'] ?>"><?= htmlspecialchars($loc['name']) ?></option>
                         <?php endforeach; ?>

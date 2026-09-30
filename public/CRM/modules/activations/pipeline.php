@@ -93,7 +93,7 @@ DB::execute(
 // ── Filters ──────────────────────────────────────────────────
 $filterStatus = $_GET['status'] ?? 'all';
 $isManager    = Auth::isManager();
-$filterLoc    = ($isOwner || $isManager) ? intval($_GET['location_id'] ?? 0) : (int)$user['location_id'];
+$filterLoc    = $isOwner ? intval($_GET['location_id'] ?? 0) : Auth::workingLocationId();
 $filterFrom   = $_GET['from'] ?? date('Y-m-01');
 $filterTo     = $_GET['to']   ?? date('Y-m-d');
 $filterStaff  = intval($_GET['user_id'] ?? 0);
@@ -102,7 +102,7 @@ $where  = ['a.activation_date BETWEEN ? AND ?'];
 $params = [$filterFrom, $filterTo];
 
 if ($filterLoc)                   { $where[] = 'a.location_id=?'; $params[] = $filterLoc; }
-elseif (!$isOwner && !$isManager) { $where[] = 'a.location_id=?'; $params[] = $user['location_id']; }
+elseif (!$isOwner) { $where[] = 'a.location_id=?'; $params[] = $user['location_id']; }
 if ($filterStatus !== 'all') { $where[] = 'a.status=?'; $params[] = $filterStatus; }
 if ($filterStaff) { $where[] = 'a.user_id=?'; $params[] = $filterStaff; }
 
@@ -127,7 +127,7 @@ $activations = DB::query(
 $pipelineCounts = DB::query(
     "SELECT status, COUNT(*) AS cnt, COALESCE(SUM(commission),0) AS total_comm
      FROM activations
-     WHERE 1=1" . (!$isOwner && !$isManager ? " AND location_id={$user['location_id']}" : "") . "
+     WHERE 1=1" . (!$isOwner ? " AND location_id={$user['location_id']}" : "") . "
      GROUP BY status"
 );
 $statusCounts = [];
@@ -136,7 +136,7 @@ foreach ($pipelineCounts as $r) $statusCounts[$r['status']] = $r;
 $allStaff = DB::query(
     "SELECT DISTINCT u.id, u.first_name, u.username
      FROM activations a JOIN users u ON u.id=a.user_id
-     " . (!$isOwner && !$isManager ? "WHERE a.location_id={$user['location_id']}" : "") . "
+     " . (!$isOwner ? "WHERE a.location_id={$user['location_id']}" : "") . "
      ORDER BY u.first_name"
 );
 

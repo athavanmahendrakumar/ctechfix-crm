@@ -639,7 +639,7 @@ label.svc-active .svc-chip,
                     <div class="form-hint">Printed on receipt. Use "No Warranty" for liquid damage, data recovery, etc.</div>
                 </div>
 
-                <?php if (Auth::isOwner() || Auth::isManager()): ?>
+                <?php if (Auth::isOwner()): ?>
                 <div class="form-group">
                     <label class="form-label">Location</label>
                     <select name="location_id" class="form-control">

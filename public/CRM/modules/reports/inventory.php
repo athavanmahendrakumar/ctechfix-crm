@@ -20,7 +20,7 @@ $isManager = Auth::isManager();
 $locations = DB::query('SELECT * FROM locations WHERE is_active=1 ORDER BY name', []);
 
 $locationId = intval($_GET['location_id'] ?? 0);
-if (!$isOwner && !$isManager) $locationId = $user['location_id'];
+if (!$isOwner) $locationId = $user['location_id'];
 
 $locWhere = $locationId ? 'AND s.location_id = ' . intval($locationId) : '';
 

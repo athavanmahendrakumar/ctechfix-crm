@@ -140,7 +140,7 @@ if ($viewId) {
         [$viewId]
     );
     if (!$drawer) { header('Location: index.php'); exit; }
-    if (!$isOwner && !$isManager && $drawer['location_id'] != $user['location_id']) {
+    if (!$isOwner && $drawer['location_id'] != Auth::workingLocationId()) {
         header('Location: index.php'); exit;
     }
     $expenses = DB::query(
@@ -181,13 +181,13 @@ if ($viewId) {
 }
 
 // ── List view ─────────────────────────────────────────────
-$filterLoc  = ($isOwner || $isManager) ? intval($_GET['location_id'] ?? 0) : (int)$user['location_id'];
+$filterLoc  = $isOwner ? intval($_GET['location_id'] ?? 0) : Auth::workingLocationId();
 $filterSt   = $_GET['status'] ?? 'active';
 
 $where  = ['1=1'];
 $params = [];
 if ($filterLoc)    { $where[] = 'cd.location_id=?'; $params[] = $filterLoc; }
-elseif (!$isOwner && !$isManager) { $where[] = 'cd.location_id=?'; $params[] = $user['location_id']; }
+elseif (!$isOwner) { $where[] = 'cd.location_id=?'; $params[] = $user['location_id']; }
 if ($filterSt === 'active')  $where[] = "cd.status IN ('open','submitted')";
 elseif ($filterSt !== 'all') { $where[] = 'cd.status=?'; $params[] = $filterSt; }
 

@@ -14,7 +14,7 @@ $_layoutRole = strtolower($_layoutUser['role'] ?? 'staff');
 // Unread SMS count for alert badge
 $_smsAlertWhere  = ['m.needs_reply = 1', 'm.direction = ?'];
 $_smsAlertParams = ['inbound'];
-if (!Auth::isOwner() && !Auth::isManager()) {
+if (!Auth::isOwner()) {
     $_smsAlertWhere[]  = 'm.location_id = ?';
     $_smsAlertParams[] = $_layoutUser['location_id'];
 }
@@ -28,7 +28,7 @@ $_unreadSmsCount = intval($_unreadSms['cnt'] ?? 0);
 $_overdueFollowups = 0;
 try {
     $_fuWhere  = ["f.status IN ('pending','in_progress')", "f.due_at <= NOW()"];
-    if (!Auth::isOwner() && !Auth::isManager()) {
+    if (!Auth::isOwner()) {
         $_fuWhere[] = "f.location_id = " . intval($_layoutUser['location_id']);
     }
     $_overdueFollowups = intval(DB::queryOne(
@@ -40,7 +40,7 @@ try {
 $_overdueInquiries = 0;
 try {
     $_inqWhere  = ["status='pending'", "created_at <= DATE_SUB(NOW(), INTERVAL 1 HOUR)"];
-    if (!Auth::isOwner() && !Auth::isManager()) {
+    if (!Auth::isOwner()) {
         $_inqWhere[] = "location_id = " . intval($_layoutUser['location_id']);
     }
     $_overdueInquiries = intval(DB::queryOne(
@@ -100,7 +100,7 @@ $_totalUrgent = $_overdueFollowups + $_overdueInquiries;
     <?php
     $_bookingPending = DB::queryOne(
         "SELECT COUNT(*) AS cnt FROM bookings WHERE status='pending'" .
-        (!Auth::isOwner() && !Auth::isManager() ? " AND location_id={$_layoutUser['location_id']}" : '')
+        (!Auth::isOwner() ? " AND location_id={$_layoutUser['location_id']}" : '')
     )['cnt'] ?? 0;
     ?>
     <a href="<?= APP_URL ?>/modules/bookings/index.php" class="nav-item <?= str_contains($_SERVER['REQUEST_URI'], '/bookings') ? 'active' : '' ?>" style="<?= $_bookingPending > 0 ? 'color:var(--amber);font-weight:600;' : '' ?>">
@@ -120,7 +120,7 @@ $_totalUrgent = $_overdueFollowups + $_overdueInquiries;
     try {
         $_pendingInquiries = intval(DB::queryOne(
             "SELECT COUNT(*) AS cnt FROM walk_in_inquiries WHERE status='pending'" .
-            (!Auth::isOwner() && !Auth::isManager() ? " AND location_id={$_layoutUser['location_id']}" : '')
+            (!Auth::isOwner() ? " AND location_id={$_layoutUser['location_id']}" : '')
         )['cnt'] ?? 0);
     } catch (\Throwable $_e) {}
     ?>

@@ -17,7 +17,7 @@ $isManager = Auth::isManager();
 $isStaff   = Auth::isStaff();
 
 // Staff only see their own location's stock fields
-$locations = ($isOwner || $isManager)
+$locations = $isOwner
     ? DB::query('SELECT * FROM locations WHERE is_active=1 ORDER BY name', [])
     : DB::query('SELECT * FROM locations WHERE is_active=1 AND id=? ORDER BY name', [$user['location_id']]);
 $errors    = [];

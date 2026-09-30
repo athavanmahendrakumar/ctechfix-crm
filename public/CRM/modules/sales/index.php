@@ -189,8 +189,9 @@ $dateTo   = date('Y-m-t', strtotime($dateFrom));
 $where  = ['s.created_at BETWEEN ? AND ?'];
 $params = [$dateFrom . ' 00:00:00', $dateTo . ' 23:59:59'];
 
-if ($filterLocation) { $where[] = 's.location_id = ?'; $params[] = $filterLocation; }
-if (Auth::isStaff())  { $where[] = 's.location_id = ?'; $params[] = $user['location_id']; }
+if ($filterLocation)    { $where[] = 's.location_id = ?'; $params[] = $filterLocation; }
+if (Auth::isManager())  { $where[] = 's.location_id = ?'; $params[] = Auth::workingLocationId(); }
+if (Auth::isStaff())    { $where[] = 's.location_id = ?'; $params[] = $user['location_id']; }
 
 $sales = DB::query(
     "SELECT s.*, l.name AS location_name, l.code AS location_code, u.first_name AS sold_by
@@ -230,7 +231,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
                 <form method="POST" id="sale-form">
 
                     <div class="form-row">
-                        <?php if (Auth::isOwner() || Auth::isManager()): ?>
+                        <?php if (Auth::isOwner()): ?>
                         <div class="form-group">
                             <label class="form-label">Location</label>
                             <select name="location_id" id="sale_location" class="form-control">
@@ -351,7 +352,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
                 <form method="GET" style="display:flex;gap:.5rem;">
                     <input type="month" name="month" class="form-control"
                            value="<?= $filterMonth ?>" onchange="this.form.submit()">
-                    <?php if (Auth::isOwner() || Auth::isManager()): ?>
+                    <?php if (Auth::isOwner()): ?>
                     <select name="location_id" class="form-control" onchange="this.form.submit()">
                         <option value="">All</option>
                         <?php foreach ($locations as $loc): ?>

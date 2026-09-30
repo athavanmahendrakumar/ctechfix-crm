@@ -19,6 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $result = Auth::attempt($username, $password);
         if ($result === true) {
+            // Managers get their location auto-set from their profile — skip check-in screen
+            if (Auth::isManager()) {
+                $locId = intval($_SESSION['location_id'] ?? 0);
+                $_SESSION['working_location_id'] = $locId;
+                $_SESSION['checkin_date']        = date('Y-m-d');
+                redirect(APP_URL . '/modules/dashboard/manager.php');
+            }
             redirect(APP_URL . '/modules/auth/checkin.php');
         } else {
             $error = $result;

@@ -1,29 +1,5 @@
 <?php
 // ============================================================
-// DEBUG ERROR HANDLER — REMOVE AFTER DEBUGGING
-// ============================================================
-register_shutdown_function(function() {
-    $e = error_get_last();
-    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        $log = dirname(__DIR__, 4) . '/debug_report_error.txt';
-        file_put_contents($log, date('Y-m-d H:i:s') . "\nFILE: " . $e['file'] . "\nLINE: " . $e['line'] . "\nMSG: " . $e['message'] . "\n\n", FILE_APPEND);
-        echo '<pre style="background:#fee;padding:20px;margin:20px;border:2px solid red;font-size:14px;">';
-        echo '<strong>PHP Fatal Error</strong><br>';
-        echo 'File: ' . $e['file'] . '<br>';
-        echo 'Line: ' . $e['line'] . '<br>';
-        echo 'Error: ' . htmlspecialchars($e['message']);
-        echo '</pre>';
-    }
-});
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    $log = dirname(__DIR__, 4) . '/debug_report_error.txt';
-    file_put_contents($log, date('Y-m-d H:i:s') . " [$errno] $errstr in $errfile:$errline\n", FILE_APPEND);
-    echo '<pre style="background:#fff3cd;padding:10px;margin:10px;border:1px solid orange;">';
-    echo "Warning [$errno]: $errstr in $errfile line $errline";
-    echo '</pre>';
-    return false;
-});
-// ============================================================
 // Sales Report — comprehensive filtering for owner / manager
 // ============================================================
 $rootPath = dirname(__DIR__, 4);

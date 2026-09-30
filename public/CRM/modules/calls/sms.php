@@ -75,9 +75,9 @@ $smsWhere  = ['1=1'];
 $smsParams = [];
 
 // Location restriction
-if (!$isOwner && !$isManager) {
+if (!$isOwner) {
     $smsWhere[]  = 's.location_id = ?';
-    $smsParams[] = $user['location_id'];
+    $smsParams[] = Auth::workingLocationId();
 } elseif ($locationFilter !== 'all') {
     $smsWhere[]  = 'l.code = ?';
     $smsParams[] = $locationFilter;

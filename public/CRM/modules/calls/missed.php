@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 $where  = ["cl.status = 'missed'", "cl.direction = 'inbound'", "cl.needs_callback = 1"];
 $params = [];
 
-if (!Auth::isOwner() && !Auth::isManager() && $user['location_id']) {
+if (!Auth::isOwner() && $user['location_id']) {
     $where[]  = 'cl.location_id = ?';
     $params[] = $user['location_id'];
 }

@@ -33,7 +33,7 @@ if (isset($_POST['ajax_scan'])) {
     if (!$count || $count['status'] !== 'in_progress') {
         echo json_encode(['ok'=>false,'msg'=>'Count is not active']); exit;
     }
-    if (!$isOwner && !$isManager && $count['location_id'] != $user['location_id']) {
+    if (!$isOwner && $count['location_id'] != $user['location_id']) {
         echo json_encode(['ok'=>false,'msg'=>'Access denied']); exit;
     }
 
@@ -267,7 +267,7 @@ if ($viewId) {
         [$viewId]
     );
     if (!$count) { header('Location: count.php'); exit; }
-    if (!$isOwner && !$isManager && $count['location_id'] != $user['location_id']) {
+    if (!$isOwner && $count['location_id'] != $user['location_id']) {
         header('Location: count.php'); exit;
     }
     $countItems = DB::query(
@@ -280,14 +280,14 @@ if ($viewId) {
 }
 
 // ── Schedule list ─────────────────────────────────────────────
-$filterLoc    = ($isOwner || $isManager) ? intval($_GET['location_id'] ?? 0) : (int)$user['location_id'];
+$filterLoc    = $isOwner ? intval($_GET['location_id'] ?? 0) : (int)$user['location_id'];
 $filterStatus = $_GET['status'] ?? 'active';
 $filterType   = $_GET['type']   ?? '';
 
 $where  = ['1=1'];
 $params = [];
 if ($filterLoc) { $where[] = 'ic.location_id=?'; $params[] = $filterLoc; }
-elseif (!$isOwner && !$isManager) { $where[] = 'ic.location_id=?'; $params[] = $user['location_id']; }
+elseif (!$isOwner) { $where[] = 'ic.location_id=?'; $params[] = $user['location_id']; }
 if ($filterStatus === 'active')  $where[] = "ic.status NOT IN ('approved')";
 elseif ($filterStatus !== 'all') { $where[] = 'ic.status=?'; $params[] = $filterStatus; }
 if ($filterType) { $where[] = 'ic.count_type=?'; $params[] = $filterType; }

@@ -24,7 +24,7 @@ $filterDate     = $_GET['date']     ?? '';
 $where  = ['1=1'];
 $params = [];
 
-if (!Auth::isOwner() && !Auth::isManager()) {
+if (!Auth::isOwner()) {
     $where[]  = 'r.location_id = ?';
     $params[] = $user['location_id'];
 } elseif ($filterLocation) {
@@ -139,7 +139,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
         <?php endforeach; ?>
     </select>
 
-    <?php if (Auth::isOwner() || Auth::isManager()): ?>
+    <?php if (Auth::isOwner()): ?>
     <select name="location" class="form-control filter-select" onchange="this.form.submit()">
         <option value="">All Locations</option>
         <?php foreach ($locations as $loc): ?>

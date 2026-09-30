@@ -1,12 +1,4 @@
 <?php
-register_shutdown_function(function() {
-    $e = error_get_last();
-    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
-        $log = dirname(__DIR__, 4) . '/debug_report_error.txt';
-        file_put_contents($log, date('Y-m-d H:i:s') . "\nFILE: " . $e['file'] . "\nLINE: " . $e['line'] . "\nMSG: " . $e['message'] . "\n\n", FILE_APPEND);
-        echo '<pre style="background:#fee;padding:20px;margin:20px;border:2px solid red;font-size:14px;"><strong>PHP Fatal Error</strong><br>File: ' . $e['file'] . '<br>Line: ' . $e['line'] . '<br>Error: ' . htmlspecialchars($e['message']) . '</pre>';
-    }
-});
 // ============================================================
 // Profit & Loss Report
 // ============================================================
@@ -71,6 +63,8 @@ if ($period === 'month') {
 }
 
 $filterLocId = intval($_GET['location_id'] ?? 0);
+// Managers are locked to their own location — cannot view another location's P&L
+if (!Auth::isOwner()) $filterLocId = Auth::workingLocationId();
 
 // ── Helper: build location filter SQL ───────────────────────
 function locFilter(string $col, int $locId): array {

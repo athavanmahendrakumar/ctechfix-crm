@@ -81,7 +81,7 @@ $where  = ['1=1'];
 $params = [];
 
 // Location restriction
-if (!$isOwner && !$isManager) {
+if (!$isOwner) {
     $where[]  = 'cl.location_id = ?';
     $params[] = $user['location_id'];
 } elseif ($locationFilter !== 'all') {
@@ -233,7 +233,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
 
 <!-- Filters -->
 <form method="GET" class="filter-bar" style="margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;" id="callFilterForm">
-    <?php if ($isOwner || $isManager): ?>
+    <?php if ($isOwner): ?>
     <select name="location" class="form-control filter-select" onchange="this.form.submit()">
         <option value="all">All Locations</option>
         <?php foreach ($locations as $loc): ?>
@@ -295,7 +295,7 @@ function toggleCustomDates(val) {
     <div class="card-body">
         <div class="empty-state">
             <div class="empty-icon">📞</div>
-            <p>No calls found for this filter. <?php if ($isOwner || $isManager): ?>Use "Sync" to pull from VoIP.ms.<?php endif; ?></p>
+            <p>No calls found for this filter. <?php if ($isOwner): ?>Use "Sync" to pull from VoIP.ms.<?php endif; ?></p>
         </div>
     </div>
     <?php else: ?>

@@ -89,14 +89,14 @@ if (isset($_GET['msg'])) { $msg = $_GET['msg']; }
 
 // ── Filters ──────────────────────────────────────────────────
 $filterStatus = $_GET['status']      ?? 'active';
-$filterLoc    = ($isOwner || $isManager) ? intval($_GET['location_id'] ?? 0) : (int)$user['location_id'];
+$filterLoc    = $isOwner ? intval($_GET['location_id'] ?? 0) : (int)$user['location_id'];
 $filterFrom   = $_GET['from'] ?? date('Y-m-d');
 $filterTo     = $_GET['to']   ?? date('Y-m-d', strtotime('+14 days'));
 
 $where  = ['b.booking_date BETWEEN ? AND ?'];
 $params = [$filterFrom, $filterTo];
 if ($filterLoc)                      { $where[] = 'b.location_id=?'; $params[] = $filterLoc; }
-elseif (!$isOwner && !$isManager)    { $where[] = 'b.location_id=?'; $params[] = $user['location_id']; }
+elseif (!$isOwner)    { $where[] = 'b.location_id=?'; $params[] = $user['location_id']; }
 if ($filterStatus === 'active')  $where[] = "b.status IN ('pending','confirmed')";
 elseif ($filterStatus !== 'all') { $where[] = 'b.status=?'; $params[] = $filterStatus; }
 
@@ -118,7 +118,7 @@ $bookings = DB::query(
 // Pending count for badge
 $pendingCount = DB::queryOne(
     "SELECT COUNT(*) AS cnt FROM bookings WHERE status='pending'"
-    . (!$isOwner && !$isManager ? " AND location_id={$user['location_id']}" : '')
+    . (!$isOwner ? " AND location_id={$user['location_id']}" : '')
 )['cnt'] ?? 0;
 
 $STATUS_COLORS = ['pending'=>'var(--amber)','confirmed'=>'var(--green)','cancelled'=>'var(--red)','completed'=>'var(--text-3)'];

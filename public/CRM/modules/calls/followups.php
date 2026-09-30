@@ -19,7 +19,7 @@ $filter    = $_GET['filter'] ?? 'open';
 
 // ── POST: Create follow-up ───────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'create') {
-    $locationId = ($isOwner || $isManager)
+    $locationId = ($isOwner)
         ? intval($_POST['location_id'] ?? $user['location_id'])
         : intval($user['location_id']);
     $type  = in_array($_POST['type'] ?? '', ['callback','appointment','general']) ? $_POST['type'] : 'general';
@@ -68,7 +68,7 @@ $where  = ['1=1'];
 $params = [];
 
 // Staff see all follow-ups at their location (not just assigned to them)
-if (!$isOwner && !$isManager && $user['location_id']) {
+if (!$isOwner && $user['location_id']) {
     $where[]  = 'f.location_id = ?';
     $params[] = $user['location_id'];
 }
@@ -151,7 +151,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
                     <input type="datetime-local" name="due_at" class="form-control" required
                            value="<?= date('Y-m-d\TH:i', strtotime('+1 hour')) ?>">
                 </div>
-                <?php if ($isOwner || $isManager): ?>
+                <?php if ($isOwner): ?>
                 <div class="form-group">
                     <label class="form-label">Location</label>
                     <select name="location_id" class="form-control">
@@ -258,7 +258,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
                 <?php else: ?>
                 <span style="color:var(--green);font-size:13px;font-weight:600;">✓ Done</span>
                 <?php endif; ?>
-                <?php if ($isOwner || $isManager): ?>
+                <?php if ($isOwner): ?>
                 <form method="POST" style="display:inline;"
                       onsubmit="return confirm('Delete this follow-up?')">
                     <input type="hidden" name="action"      value="delete">

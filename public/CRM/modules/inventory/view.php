@@ -15,7 +15,7 @@ $user      = Auth::user();
 $itemId    = intval($_GET['id'] ?? 0);
 $isOwner   = Auth::isOwner();
 $isManager = Auth::isManager();
-$locations = ($isOwner || $isManager)
+$locations = $isOwner
     ? DB::query('SELECT * FROM locations WHERE is_active=1 ORDER BY name', [])
     : DB::query('SELECT * FROM locations WHERE is_active=1 AND id=? ORDER BY name', [$user['location_id']]);
 
@@ -168,7 +168,7 @@ require_once APP_ROOT . '/modules/layout/header.php';
                             <label class="form-label">Adjustment</label>
                             <select name="adj_type" class="form-control">
                                 <option value="in">➕ Add Stock</option>
-                                <?php if ($isOwner || $isManager): ?>
+                                <?php if ($isOwner): ?>
                                 <option value="out">➖ Remove Stock</option>
                                 <?php endif; ?>
                             </select>

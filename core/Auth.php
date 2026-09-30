@@ -109,6 +109,14 @@ class Auth {
     // ----------------------------------------------------------
     public static function requireCheckin(): void {
         self::require();
+        // Managers don't do manual check-in — auto-set from their primary location
+        if (self::isManager()) {
+            if (empty($_SESSION['working_location_id'])) {
+                $_SESSION['working_location_id'] = intval($_SESSION['location_id'] ?? 0);
+                $_SESSION['checkin_date']        = date('Y-m-d');
+            }
+            return;
+        }
         $today = date('Y-m-d');
         if (
             empty($_SESSION['working_location_id']) ||
@@ -182,9 +190,14 @@ class Auth {
     public static function isStaff():   bool { return ($_SESSION['role'] ?? '') === 'staff'; }
     public static function isTraining():bool { return !empty($_SESSION['is_training']); }
 
+    // Can the current user see ALL locations? (owner only — managers locked to their location)
+    public static function isMultiLocation(): bool {
+        return self::isOwner();
+    }
+
     // Can the current user access a given location?
     public static function canAccessLocation(int $locationId): bool {
-        if (self::isOwner() || self::isManager()) return true;
+        if (self::isOwner()) return true;
         return ((int)($_SESSION['location_id'] ?? 0)) === $locationId;
     }
 
@@ -196,7 +209,7 @@ class Auth {
             'manager' => [
                 'manage_staff', 'approve_discounts', 'approve_inventory',
                 'approve_transfers', 'approve_complaints', 'approve_cash',
-                'view_all_locations', 'view_audit_operational',
+                'view_audit_operational',
                 'create_coupons', 'manage_repairs', 'manage_sales',
                 'manage_customers', 'manage_calls', 'manage_activations',
             ],

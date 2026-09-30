@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $where  = ['m.needs_reply = 1', 'm.direction = "inbound"'];
 $params = [];
 
-if (!Auth::isOwner() && !Auth::isManager()) {
+if (!Auth::isOwner()) {
     $where[]  = 'm.location_id = ?';
     $params[] = $user['location_id'];
 }

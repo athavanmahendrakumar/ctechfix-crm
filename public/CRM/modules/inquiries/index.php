@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $model   = trim($_POST['device_model'] ?? '');
             $desc    = trim($_POST['description'] ?? '');
             $estPrice = $_POST['estimated_price'] !== '' ? floatval($_POST['estimated_price']) : null;
-            $locId   = ($isOwner || $isManager) ? intval($_POST['location_id'] ?? $locationId) : $locationId;
+            $locId   = $isOwner ? intval($_POST['location_id'] ?? $locationId) : Auth::workingLocationId();
 
             if (!$name)  { $msg = 'Customer name is required.'; $msgType = 'danger'; }
             elseif (strlen($phone) < 10) { $msg = 'Enter a valid 10-digit phone number.'; $msgType = 'danger'; }
@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // ── Filters ───────────────────────────────────────────────────
 $filterStatus = $_GET['status'] ?? 'pending';
-$filterLoc    = ($isOwner || $isManager) ? intval($_GET['location_id'] ?? 0) : $locationId;
+$filterLoc    = $isOwner ? intval($_GET['location_id'] ?? 0) : Auth::workingLocationId();
 
 $where  = ['1=1'];
 $params = [];
