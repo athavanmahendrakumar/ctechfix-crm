@@ -86,7 +86,7 @@ $staffWhereAct   = $staffId ? "AND a.user_id=$staffId"     : '';
 $walkinRev = 0; $walkinCount = 0;
 if ($stream === 'all' || $stream === 'walkin') {
     $w = DB::queryOne(
-        "SELECT COALESCE(SUM(s.subtotal),0) AS rev, COUNT(*) AS cnt
+        "SELECT COALESCE(SUM(s.total_amount),0) AS rev, COUNT(*) AS cnt
          FROM sales s
          WHERE DATE(s.created_at) BETWEEN ? AND ?
            AND s.sale_type = 'sale'
@@ -101,7 +101,7 @@ if ($stream === 'all' || $stream === 'walkin') {
 $repairRev = 0; $repairCount = 0;
 if ($stream === 'all' || $stream === 'repairs') {
     $r = DB::queryOne(
-        "SELECT COALESCE(SUM(s.subtotal),0) AS rev, COUNT(DISTINCT r.id) AS cnt
+        "SELECT COALESCE(SUM(s.total_amount),0) AS rev, COUNT(DISTINCT r.id) AS cnt
          FROM sales s
          JOIN repairs r ON r.id = s.repair_id
          WHERE DATE(s.created_at) BETWEEN ? AND ?
@@ -137,7 +137,7 @@ $avgSale    = $totalTxns > 0 ? $totalRev / $totalTxns : 0;
 $payBreakdown = [];
 if ($stream !== 'activations') {
     $payRows = DB::query(
-        "SELECT s.payment_method, COALESCE(SUM(s.subtotal),0) AS rev, COUNT(*) AS cnt
+        "SELECT s.payment_method, COALESCE(SUM(s.total_amount),0) AS rev, COUNT(*) AS cnt
          FROM sales s
          LEFT JOIN repairs r ON r.id=s.repair_id AND s.sale_type IN ('repair_final','repair_deposit')
          WHERE DATE(s.created_at) BETWEEN ? AND ?
