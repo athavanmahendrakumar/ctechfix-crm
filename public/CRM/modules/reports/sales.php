@@ -89,9 +89,11 @@ switch ($period) {
 }
 
 // ── Location WHERE helpers ────────────────────────────────────
-$locSalesSql = $locId ? "AND s.location_id=$locId" : '';
-$locRepSql   = $locId ? "AND r.location_id=$locId" : '';
-$locActSql   = $locId ? "AND a.location_id=$locId" : '';
+$locSalesSql  = $locId ? "AND s.location_id=$locId" : '';   // use when sales aliased as s
+$locSalesPlain= $locId ? "AND location_id=$locId"   : '';   // use when sales has no alias
+$locRepSql    = $locId ? "AND r.location_id=$locId" : '';
+$locActSql    = $locId ? "AND a.location_id=$locId" : '';
+$locActPlain  = $locId ? "AND location_id=$locId"   : '';   // use when activations has no alias
 
 // ── Payment method filter (sales table) ──────────────────────
 $payWhere = '';
@@ -184,18 +186,18 @@ $dailyRows = DB::query(
         COALESCE(ac.cnt,0)  AS act_cnt
      FROM (
          SELECT DATE(created_at) AS day FROM sales
-         WHERE DATE(created_at) BETWEEN ? AND ? $locSalesSql
+         WHERE DATE(created_at) BETWEEN ? AND ? $locSalesPlain
          UNION
          SELECT activation_date AS day FROM activations
-         WHERE activation_date BETWEEN ? AND ? $locActSql
+         WHERE activation_date BETWEEN ? AND ? $locActPlain
      ) d
      LEFT JOIN (
-         SELECT DATE(created_at) AS day, SUM(subtotal) AS rev, COUNT(*) AS cnt
-         FROM sales WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $locSalesSql $payWhere $staffWhereSales
+         SELECT DATE(created_at) AS day, SUM(total_amount) AS rev, COUNT(*) AS cnt
+         FROM sales WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $locSalesPlain
          GROUP BY DATE(created_at)
      ) wi ON wi.day = d.day
      LEFT JOIN (
-         SELECT DATE(s.created_at) AS day, SUM(s.subtotal) AS rev, COUNT(DISTINCT r.id) AS cnt
+         SELECT DATE(s.created_at) AS day, SUM(s.total_amount) AS rev, COUNT(DISTINCT r.id) AS cnt
          FROM sales s JOIN repairs r ON r.id=s.repair_id
          WHERE s.sale_type IN ('repair_final','repair_deposit')
            AND r.is_training=0 AND DATE(s.created_at) BETWEEN ? AND ? $locSalesSql $payWhere $staffWhereSales
@@ -203,7 +205,7 @@ $dailyRows = DB::query(
      ) rp ON rp.day = d.day
      LEFT JOIN (
          SELECT activation_date AS day, SUM(commission) AS rev, COUNT(*) AS cnt
-         FROM activations WHERE activation_date BETWEEN ? AND ? $locActSql $staffWhereAct
+         FROM activations WHERE activation_date BETWEEN ? AND ? $locActPlain $staffWhereAct
          GROUP BY activation_date
      ) ac ON ac.day = d.day
      GROUP BY d.day ORDER BY d.day ASC",
@@ -251,12 +253,12 @@ $staffRows = DB::query(
             COALESCE(ac.rev,0) AS act_rev,    COALESCE(ac.cnt,0) AS act_cnt
      FROM users u
      LEFT JOIN (
-         SELECT created_by, SUM(subtotal) AS rev, COUNT(*) AS cnt
-         FROM sales WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $locSalesSql
+         SELECT created_by, SUM(total_amount) AS rev, COUNT(*) AS cnt
+         FROM sales WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $locSalesPlain
          GROUP BY created_by
      ) wi ON wi.created_by = u.id
      LEFT JOIN (
-         SELECT s.created_by, SUM(s.subtotal) AS rev, COUNT(DISTINCT r.id) AS cnt
+         SELECT s.created_by, SUM(s.total_amount) AS rev, COUNT(DISTINCT r.id) AS cnt
          FROM sales s JOIN repairs r ON r.id=s.repair_id
          WHERE s.sale_type IN ('repair_final','repair_deposit') AND r.is_training=0
            AND DATE(s.created_at) BETWEEN ? AND ? $locSalesSql
@@ -264,7 +266,7 @@ $staffRows = DB::query(
      ) rp ON rp.created_by = u.id
      LEFT JOIN (
          SELECT user_id, SUM(commission) AS rev, COUNT(*) AS cnt
-         FROM activations WHERE activation_date BETWEEN ? AND ? $locActSql
+         FROM activations WHERE activation_date BETWEEN ? AND ? $locActPlain
          GROUP BY user_id
      ) ac ON ac.user_id = u.id
      WHERE u.is_active=1
@@ -282,9 +284,9 @@ $allStaff = DB::query(
 $days      = max(1, (strtotime($dateTo) - strtotime($dateFrom)) / 86400 + 1);
 $prevFrom  = date('Y-m-d', strtotime($dateFrom) - ($days * 86400));
 $prevTo    = date('Y-m-d', strtotime($dateFrom) - 86400);
-$prevW = DB::queryOne("SELECT COALESCE(SUM(subtotal),0) AS rev FROM sales WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $locSalesSql", [$prevFrom,$prevTo]);
-$prevR = DB::queryOne("SELECT COALESCE(SUM(s.subtotal),0) AS rev FROM sales s JOIN repairs r ON r.id=s.repair_id WHERE s.sale_type IN ('repair_final','repair_deposit') AND r.is_training=0 AND DATE(s.created_at) BETWEEN ? AND ? $locSalesSql", [$prevFrom,$prevTo]);
-$prevA = DB::queryOne("SELECT COALESCE(SUM(commission),0) AS rev FROM activations WHERE activation_date BETWEEN ? AND ? $locActSql", [$prevFrom,$prevTo]);
+$prevW = DB::queryOne("SELECT COALESCE(SUM(total_amount),0) AS rev FROM sales WHERE sale_type='sale' AND DATE(created_at) BETWEEN ? AND ? $locSalesPlain", [$prevFrom,$prevTo]);
+$prevR = DB::queryOne("SELECT COALESCE(SUM(s.total_amount),0) AS rev FROM sales s JOIN repairs r ON r.id=s.repair_id WHERE s.sale_type IN ('repair_final','repair_deposit') AND r.is_training=0 AND DATE(s.created_at) BETWEEN ? AND ? $locSalesSql", [$prevFrom,$prevTo]);
+$prevA = DB::queryOne("SELECT COALESCE(SUM(commission),0) AS rev FROM activations WHERE activation_date BETWEEN ? AND ? $locActPlain", [$prevFrom,$prevTo]);
 $prevTotal = (float)($prevW['rev']??0) + (float)($prevR['rev']??0) + (float)($prevA['rev']??0);
 $vsChange  = $prevTotal > 0 ? round(($totalRev - $prevTotal) / $prevTotal * 100, 1) : null;
 
